@@ -1,5 +1,6 @@
 package com.ace4.RestaurantFeedback.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,11 +19,12 @@ public class DishFeedback {
     private Integer rating;
     private String comment;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "dish_id")
     private Dish dish;
 
     @ManyToOne
     @JoinColumn(name = "feedback_id")
+    @JsonIgnore
     private Feedback feedback;
 }

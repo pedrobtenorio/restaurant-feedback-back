@@ -1,5 +1,6 @@
 package com.ace4.RestaurantFeedback.controller;
 
+import com.ace4.RestaurantFeedback.Exception.EntityNotFoundException;
 import com.ace4.RestaurantFeedback.model.Feedback;
 import com.ace4.RestaurantFeedback.service.FeedbackService;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +20,13 @@ public class FeedbackController {
     }
 
     @PostMapping
-    public ResponseEntity<Feedback> create(@RequestBody Feedback feedback) {
-        Feedback saved = feedbackService.save(feedback);
-        return ResponseEntity.ok(saved);
+    public ResponseEntity<?> create(@RequestBody Feedback feedback) {
+        try {
+            Feedback saved = feedbackService.save(feedback);
+            return ResponseEntity.ok(saved);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
     }
 
     @GetMapping
@@ -36,22 +41,6 @@ public class FeedbackController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Feedback> update(@PathVariable Long id, @RequestBody Feedback feedback) {
-        return feedbackService.findById(id)
-                .map(existing -> {
-                    existing.setCustomerName(feedback.getCustomerName());
-                    existing.setServiceRating(feedback.getServiceRating());
-                    existing.setFoodRating(feedback.getFoodRating());
-                    existing.setEnvironmentRating(feedback.getEnvironmentRating());
-                    existing.setComment(feedback.getComment());
-                    existing.setTable(feedback.getTable());
-                    existing.setDishFeedbackList(feedback.getDishFeedbackList());
-                    Feedback updated = feedbackService.save(existing);
-                    return ResponseEntity.ok(updated);
-                })
-                .orElse(ResponseEntity.notFound().build());
-    }
 
 
     @DeleteMapping("/{id}")

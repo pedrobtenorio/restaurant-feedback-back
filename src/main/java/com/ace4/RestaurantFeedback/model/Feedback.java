@@ -28,7 +28,7 @@ public class Feedback {
 
     private LocalDateTime timestamp;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "table_id")
     private DiningTable table;
 
