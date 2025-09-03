@@ -35,7 +35,7 @@ public class FeedbackService {
     public List<Feedback> findAll() {
         return feedbackRepository.findAll();
     }
-
+    public List<Feedback> findByAttendantName(String attendantName) { return feedbackRepository.findByAttendantName(attendantName); }
     public Optional<Feedback> findById(Long id) {
         return feedbackRepository.findById(id);
     }
