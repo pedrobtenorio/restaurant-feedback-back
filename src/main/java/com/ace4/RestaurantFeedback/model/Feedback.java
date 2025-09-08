@@ -19,12 +19,18 @@ public class Feedback {
     private Long id;
 
     private String customerName;
+    private String attendantName;
 
     private Integer serviceRating;
     private Integer foodRating;
     private Integer environmentRating;
+    private Integer recommendationRating;
 
-    private String comment;
+    private String serviceComment;
+    private String foodComment;
+    private String environmentComment;
+
+    private String generalComment;
 
     private LocalDateTime timestamp;
 
@@ -39,5 +45,4 @@ public class Feedback {
     public void prePersist() {
         this.timestamp = LocalDateTime.now();
     }
-
 }
