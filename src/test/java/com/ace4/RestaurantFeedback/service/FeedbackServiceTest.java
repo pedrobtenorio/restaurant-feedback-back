@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,13 +41,12 @@ class FeedbackServiceTest {
     private FeedbackService feedbackService;
 
     private Feedback feedback;
-    private DiningTable diningTable;
     private Dish dish;
     private DishFeedback dishFeedback;
 
     @BeforeEach
     void setUp() {
-        diningTable = new DiningTable();
+        DiningTable diningTable = new DiningTable();
         diningTable.setId(1L);
 
         dish = new Dish();
@@ -61,7 +61,7 @@ class FeedbackServiceTest {
         feedback = new Feedback();
         feedback.setId(1L);
         feedback.setTable(diningTable);
-        feedback.setDishFeedbackList(Arrays.asList(dishFeedback));
+        feedback.setDishFeedbackList(List.of(dishFeedback));
     }
 
     @Test
@@ -136,7 +136,7 @@ class FeedbackServiceTest {
     @Test
     void findAll_ShouldReturnListOfFeedbacks() {
         // Arrange
-        List<Feedback> feedbacks = Arrays.asList(feedback);
+        List<Feedback> feedbacks = Collections.singletonList(feedback);
         when(feedbackRepository.findAll()).thenReturn(feedbacks);
 
         // Act
@@ -145,7 +145,7 @@ class FeedbackServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(feedback, result.get(0));
+        assertEquals(feedback, result.getFirst());
         verify(feedbackRepository, times(1)).findAll();
     }
 
@@ -191,7 +191,7 @@ class FeedbackServiceTest {
     @Test
     void save_WithEmptyDishFeedbackList_ShouldSaveSuccessfully() {
         // Arrange
-        feedback.setDishFeedbackList(Arrays.asList());
+        feedback.setDishFeedbackList(List.of());
         when(diningTableRepository.existsById(1L)).thenReturn(true);
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
 
