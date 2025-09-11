@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -75,7 +76,7 @@ class FeedbackServiceTest {
     }
 
     @Test
-    void save_WithValidData_ShouldReturnFeedbackResponse() {
+    void saveWithValidDataShouldReturnFeedbackResponse() {
         // Arrange
         when(dishRepository.findById(1L)).thenReturn(Optional.of(dish));
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
@@ -93,7 +94,7 @@ class FeedbackServiceTest {
     }
 
     @Test
-    void save_WithNonExistingDish_ShouldThrowEntityNotFoundException() {
+    void saveWithNonExistingDishShouldThrowEntityNotFoundException() {
         // Arrange
         when(dishRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -108,7 +109,7 @@ class FeedbackServiceTest {
     }
 
     @Test
-    void save_WithoutDishFeedbackList_ShouldSaveSuccessfully() {
+    void saveWithoutDishFeedbackListShouldSaveSuccessfully() {
         // Arrange
         FeedbackRequest requestWithoutDish = new FeedbackRequest(
                 "João", 5, 5, 5, 5,
@@ -128,7 +129,7 @@ class FeedbackServiceTest {
     }
 
     @Test
-    void findAll_ShouldReturnListOfFeedbackResponses() {
+    void findAllShouldReturnListOfFeedbackResponses() {
         // Arrange
         List<Feedback> feedbacks = Collections.singletonList(feedback);
         when(feedbackRepository.findAll()).thenReturn(feedbacks);
@@ -144,7 +145,7 @@ class FeedbackServiceTest {
     }
 
     @Test
-    void findById_WithExistingId_ShouldReturnFeedbackResponse() {
+    void findByIdWithExistingIdShouldReturnFeedbackResponse() {
         // Arrange
         when(feedbackRepository.findById(1L)).thenReturn(Optional.of(feedback));
 
@@ -158,7 +159,7 @@ class FeedbackServiceTest {
     }
 
     @Test
-    void findById_WithNonExistingId_ShouldReturnEmpty() {
+    void findByIdWithNonExistingIdShouldReturnEmpty() {
         // Arrange
         when(feedbackRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -171,7 +172,7 @@ class FeedbackServiceTest {
     }
 
     @Test
-    void deleteById_ShouldCallRepositoryDelete() {
+    void deleteByIdShouldCallRepositoryDelete() {
         // Arrange
         doNothing().when(feedbackRepository).deleteById(1L);
 
@@ -180,5 +181,68 @@ class FeedbackServiceTest {
 
         // Assert
         verify(feedbackRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void saveWithEmptyDishFeedbackListShouldSaveSuccessfully() {
+        // Arrange
+        FeedbackRequest requestWithEmptyDishList = new FeedbackRequest(
+                "João", 5, 5, 5, 5,
+                "Ótimo", "Delicioso", "Agradável", "Recomendo!",
+                Collections.emptyList()
+        );
+
+        feedback.setDishFeedbackList(Collections.emptyList());
+        when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
+
+        // Act
+        FeedbackResponse savedFeedback = feedbackService.save(requestWithEmptyDishList);
+
+        // Assert
+        assertNotNull(savedFeedback);
+        assertTrue(savedFeedback.dishFeedbacks().isEmpty());
+        verify(dishRepository, never()).findById(anyLong());
+        verify(feedbackRepository, times(1)).save(any(Feedback.class));
+    }
+
+    @Test
+    void saveWithMultipleDishFeedbacksShouldSaveSuccessfully() {
+        // Arrange
+        Dish dish2 = new Dish();
+        dish2.setId(2L);
+        dish2.setName("Hamburger");
+
+        FeedbackRequest.DishFeedbackRequest dishFeedbackRequest1 =
+                new FeedbackRequest.DishFeedbackRequest(1L, 5, "Excelente!");
+        FeedbackRequest.DishFeedbackRequest dishFeedbackRequest2 =
+                new FeedbackRequest.DishFeedbackRequest(2L, 4, "Muito bom");
+
+        FeedbackRequest requestWithMultipleDishes = new FeedbackRequest(
+                "João", 5, 5, 5, 5,
+                "Ótimo atendimento", "Comida deliciosa", "Ambiente agradável", "Recomendo!",
+                List.of(dishFeedbackRequest1, dishFeedbackRequest2)
+        );
+
+        DishFeedback dishFeedback2 = new DishFeedback();
+        dishFeedback2.setId(2L);
+        dishFeedback2.setDish(dish2);
+        dishFeedback2.setRating(4);
+        dishFeedback2.setComment("Muito bom");
+
+        feedback.setDishFeedbackList(Arrays.asList(feedback.getDishFeedbackList().getFirst(), dishFeedback2));
+
+        when(dishRepository.findById(1L)).thenReturn(Optional.of(dish));
+        when(dishRepository.findById(2L)).thenReturn(Optional.of(dish2));
+        when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
+
+        // Act
+        FeedbackResponse savedFeedback = feedbackService.save(requestWithMultipleDishes);
+
+        // Assert
+        assertNotNull(savedFeedback);
+        assertEquals(2, savedFeedback.dishFeedbacks().size());
+        verify(dishRepository, times(1)).findById(1L);
+        verify(dishRepository, times(1)).findById(2L);
+        verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
 }
