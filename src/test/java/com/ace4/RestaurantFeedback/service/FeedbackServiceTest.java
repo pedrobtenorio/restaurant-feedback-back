@@ -1,11 +1,9 @@
 package com.ace4.RestaurantFeedback.service;
 
 import com.ace4.RestaurantFeedback.Exception.EntityNotFoundException;
-import com.ace4.RestaurantFeedback.model.DiningTable;
 import com.ace4.RestaurantFeedback.model.Dish;
 import com.ace4.RestaurantFeedback.model.Feedback;
 import com.ace4.RestaurantFeedback.model.DishFeedback;
-import com.ace4.RestaurantFeedback.repository.DiningTableRepository;
 import com.ace4.RestaurantFeedback.repository.DishRepository;
 import com.ace4.RestaurantFeedback.repository.FeedbackRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,9 +30,6 @@ class FeedbackServiceTest {
     private FeedbackRepository feedbackRepository;
 
     @Mock
-    private DiningTableRepository diningTableRepository;
-
-    @Mock
     private DishRepository dishRepository;
 
     @InjectMocks
@@ -46,9 +41,6 @@ class FeedbackServiceTest {
 
     @BeforeEach
     void setUp() {
-        DiningTable diningTable = new DiningTable();
-        diningTable.setId(1L);
-
         dish = new Dish();
         dish.setId(1L);
         dish.setName("Pizza");
@@ -60,14 +52,12 @@ class FeedbackServiceTest {
 
         feedback = new Feedback();
         feedback.setId(1L);
-        feedback.setTable(diningTable);
         feedback.setDishFeedbackList(List.of(dishFeedback));
     }
 
     @Test
     void save_WithValidData_ShouldReturnSavedFeedback() {
         // Arrange
-        when(diningTableRepository.existsById(1L)).thenReturn(true);
         when(dishRepository.findById(1L)).thenReturn(Optional.of(dish));
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
 
@@ -77,31 +67,13 @@ class FeedbackServiceTest {
         // Assert
         assertNotNull(savedFeedback);
         assertEquals(1L, savedFeedback.getId());
-        verify(diningTableRepository, times(1)).existsById(1L);
         verify(dishRepository, times(1)).findById(1L);
         verify(feedbackRepository, times(1)).save(feedback);
     }
 
     @Test
-    void save_WithNonExistingTable_ShouldThrowEntityNotFoundException() {
-        // Arrange
-        when(diningTableRepository.existsById(1L)).thenReturn(false);
-
-        // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, 
-            () -> feedbackService.save(feedback));
-        
-        assertEquals("DiningTable", exception.getEntity());
-        assertEquals("1", exception.getId());
-        verify(diningTableRepository, times(1)).existsById(1L);
-        verify(dishRepository, never()).findById(anyLong());
-        verify(feedbackRepository, never()).save(any());
-    }
-
-    @Test
     void save_WithNonExistingDish_ShouldThrowEntityNotFoundException() {
         // Arrange
-        when(diningTableRepository.existsById(1L)).thenReturn(true);
         when(dishRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -110,7 +82,6 @@ class FeedbackServiceTest {
         
         assertEquals("Dish", exception.getEntity());
         assertEquals("1", exception.getId());
-        verify(diningTableRepository, times(1)).existsById(1L);
         verify(dishRepository, times(1)).findById(1L);
         verify(feedbackRepository, never()).save(any());
     }
@@ -119,7 +90,6 @@ class FeedbackServiceTest {
     void save_WithoutDishFeedbackList_ShouldSaveSuccessfully() {
         // Arrange
         feedback.setDishFeedbackList(null);
-        when(diningTableRepository.existsById(1L)).thenReturn(true);
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
 
         // Act
@@ -128,7 +98,6 @@ class FeedbackServiceTest {
         // Assert
         assertNotNull(savedFeedback);
         assertNull(savedFeedback.getDishFeedbackList());
-        verify(diningTableRepository, times(1)).existsById(1L);
         verify(dishRepository, never()).findById(anyLong());
         verify(feedbackRepository, times(1)).save(feedback);
     }
@@ -192,7 +161,6 @@ class FeedbackServiceTest {
     void save_WithEmptyDishFeedbackList_ShouldSaveSuccessfully() {
         // Arrange
         feedback.setDishFeedbackList(List.of());
-        when(diningTableRepository.existsById(1L)).thenReturn(true);
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
 
         // Act
@@ -201,7 +169,6 @@ class FeedbackServiceTest {
         // Assert
         assertNotNull(savedFeedback);
         assertTrue(savedFeedback.getDishFeedbackList().isEmpty());
-        verify(diningTableRepository, times(1)).existsById(1L);
         verify(dishRepository, never()).findById(anyLong());
         verify(feedbackRepository, times(1)).save(feedback);
     }
@@ -220,7 +187,6 @@ class FeedbackServiceTest {
 
         feedback.setDishFeedbackList(Arrays.asList(dishFeedback, dishFeedback2));
 
-        when(diningTableRepository.existsById(1L)).thenReturn(true);
         when(dishRepository.findById(1L)).thenReturn(Optional.of(dish));
         when(dishRepository.findById(2L)).thenReturn(Optional.of(dish2));
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
@@ -231,7 +197,6 @@ class FeedbackServiceTest {
         // Assert
         assertNotNull(savedFeedback);
         assertEquals(2, savedFeedback.getDishFeedbackList().size());
-        verify(diningTableRepository, times(1)).existsById(1L);
         verify(dishRepository, times(1)).findById(1L);
         verify(dishRepository, times(1)).findById(2L);
         verify(feedbackRepository, times(1)).save(feedback);

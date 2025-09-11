@@ -34,10 +34,6 @@ public class Feedback {
 
     private LocalDateTime timestamp;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "table_id")
-    private DiningTable table;
-
     @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DishFeedback> dishFeedbackList;
 
