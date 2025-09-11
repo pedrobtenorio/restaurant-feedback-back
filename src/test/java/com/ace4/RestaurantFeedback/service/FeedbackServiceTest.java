@@ -4,6 +4,8 @@ import com.ace4.RestaurantFeedback.Exception.EntityNotFoundException;
 import com.ace4.RestaurantFeedback.model.Dish;
 import com.ace4.RestaurantFeedback.model.Feedback;
 import com.ace4.RestaurantFeedback.model.DishFeedback;
+import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackRequest;
+import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackResponse;
 import com.ace4.RestaurantFeedback.repository.DishRepository;
 import com.ace4.RestaurantFeedback.repository.FeedbackRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -35,9 +38,9 @@ class FeedbackServiceTest {
     @InjectMocks
     private FeedbackService feedbackService;
 
+    private FeedbackRequest feedbackRequest;
     private Feedback feedback;
     private Dish dish;
-    private DishFeedback dishFeedback;
 
     @BeforeEach
     void setUp() {
@@ -45,41 +48,60 @@ class FeedbackServiceTest {
         dish.setId(1L);
         dish.setName("Pizza");
 
-        dishFeedback = new DishFeedback();
+        FeedbackRequest.DishFeedbackRequest dishFeedbackRequest =
+                new FeedbackRequest.DishFeedbackRequest(1L, 5, "Excelente!");
+
+        feedbackRequest = new FeedbackRequest(
+                "João",
+                5, 5, 5, 5,
+                "Ótimo atendimento",
+                "Comida deliciosa",
+                "Ambiente agradável",
+                "Recomendo!",
+                List.of(dishFeedbackRequest)
+        );
+
+        feedback = new Feedback();
+        feedback.setId(1L);
+        feedback.setAttendantName("João");
+        feedback.setTimestamp(LocalDateTime.now());
+
+        DishFeedback dishFeedback = new DishFeedback();
+        dishFeedback.setId(1L);
         dishFeedback.setDish(dish);
         dishFeedback.setRating(5);
         dishFeedback.setComment("Excelente!");
 
-        feedback = new Feedback();
-        feedback.setId(1L);
         feedback.setDishFeedbackList(List.of(dishFeedback));
     }
 
     @Test
-    void save_WithValidData_ShouldReturnSavedFeedback() {
+    void saveWithValidDataShouldReturnFeedbackResponse() {
         // Arrange
         when(dishRepository.findById(1L)).thenReturn(Optional.of(dish));
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
 
         // Act
-        Feedback savedFeedback = feedbackService.save(feedback);
+        FeedbackResponse savedFeedback = feedbackService.save(feedbackRequest);
 
         // Assert
         assertNotNull(savedFeedback);
-        assertEquals(1L, savedFeedback.getId());
+        assertEquals("João", savedFeedback.attendantName());
+        assertEquals(1, savedFeedback.dishFeedbacks().size());
+        assertEquals("Pizza", savedFeedback.dishFeedbacks().getFirst().dishName());
         verify(dishRepository, times(1)).findById(1L);
-        verify(feedbackRepository, times(1)).save(feedback);
+        verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
 
     @Test
-    void save_WithNonExistingDish_ShouldThrowEntityNotFoundException() {
+    void saveWithNonExistingDishShouldThrowEntityNotFoundException() {
         // Arrange
         when(dishRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, 
-            () -> feedbackService.save(feedback));
-        
+            () -> feedbackService.save(feedbackRequest));
+
         assertEquals("Dish", exception.getEntity());
         assertEquals("1", exception.getId());
         verify(dishRepository, times(1)).findById(1L);
@@ -87,58 +109,62 @@ class FeedbackServiceTest {
     }
 
     @Test
-    void save_WithoutDishFeedbackList_ShouldSaveSuccessfully() {
+    void saveWithoutDishFeedbackListShouldSaveSuccessfully() {
         // Arrange
+        FeedbackRequest requestWithoutDish = new FeedbackRequest(
+                "João", 5, 5, 5, 5,
+                "Ótimo", "Delicioso", "Agradável", "Recomendo!", null
+        );
         feedback.setDishFeedbackList(null);
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
 
         // Act
-        Feedback savedFeedback = feedbackService.save(feedback);
+        FeedbackResponse savedFeedback = feedbackService.save(requestWithoutDish);
 
         // Assert
         assertNotNull(savedFeedback);
-        assertNull(savedFeedback.getDishFeedbackList());
+        assertNull(savedFeedback.dishFeedbacks());
         verify(dishRepository, never()).findById(anyLong());
-        verify(feedbackRepository, times(1)).save(feedback);
+        verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
 
     @Test
-    void findAll_ShouldReturnListOfFeedbacks() {
+    void findAllShouldReturnListOfFeedbackResponses() {
         // Arrange
         List<Feedback> feedbacks = Collections.singletonList(feedback);
         when(feedbackRepository.findAll()).thenReturn(feedbacks);
 
         // Act
-        List<Feedback> result = feedbackService.findAll();
+        List<FeedbackResponse> result = feedbackService.findAll();
 
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(feedback, result.getFirst());
+        assertEquals("João", result.getFirst().attendantName());
         verify(feedbackRepository, times(1)).findAll();
     }
 
     @Test
-    void findById_WithExistingId_ShouldReturnFeedback() {
+    void findByIdWithExistingIdShouldReturnFeedbackResponse() {
         // Arrange
         when(feedbackRepository.findById(1L)).thenReturn(Optional.of(feedback));
 
         // Act
-        Optional<Feedback> result = feedbackService.findById(1L);
+        Optional<FeedbackResponse> result = feedbackService.findById(1L);
 
         // Assert
         assertTrue(result.isPresent());
-        assertEquals(feedback, result.get());
+        assertEquals("João", result.get().attendantName());
         verify(feedbackRepository, times(1)).findById(1L);
     }
 
     @Test
-    void findById_WithNonExistingId_ShouldReturnEmpty() {
+    void findByIdWithNonExistingIdShouldReturnEmpty() {
         // Arrange
         when(feedbackRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act
-        Optional<Feedback> result = feedbackService.findById(1L);
+        Optional<FeedbackResponse> result = feedbackService.findById(1L);
 
         // Assert
         assertFalse(result.isPresent());
@@ -146,7 +172,7 @@ class FeedbackServiceTest {
     }
 
     @Test
-    void deleteById_ShouldCallRepositoryDelete() {
+    void deleteByIdShouldCallRepositoryDelete() {
         // Arrange
         doNothing().when(feedbackRepository).deleteById(1L);
 
@@ -158,47 +184,65 @@ class FeedbackServiceTest {
     }
 
     @Test
-    void save_WithEmptyDishFeedbackList_ShouldSaveSuccessfully() {
+    void saveWithEmptyDishFeedbackListShouldSaveSuccessfully() {
         // Arrange
-        feedback.setDishFeedbackList(List.of());
+        FeedbackRequest requestWithEmptyDishList = new FeedbackRequest(
+                "João", 5, 5, 5, 5,
+                "Ótimo", "Delicioso", "Agradável", "Recomendo!",
+                Collections.emptyList()
+        );
+
+        feedback.setDishFeedbackList(Collections.emptyList());
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
 
         // Act
-        Feedback savedFeedback = feedbackService.save(feedback);
+        FeedbackResponse savedFeedback = feedbackService.save(requestWithEmptyDishList);
 
         // Assert
         assertNotNull(savedFeedback);
-        assertTrue(savedFeedback.getDishFeedbackList().isEmpty());
+        assertTrue(savedFeedback.dishFeedbacks().isEmpty());
         verify(dishRepository, never()).findById(anyLong());
-        verify(feedbackRepository, times(1)).save(feedback);
+        verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
 
     @Test
-    void save_WithMultipleDishFeedbacks_ShouldSaveSuccessfully() {
+    void saveWithMultipleDishFeedbacksShouldSaveSuccessfully() {
         // Arrange
         Dish dish2 = new Dish();
         dish2.setId(2L);
         dish2.setName("Hamburger");
 
+        FeedbackRequest.DishFeedbackRequest dishFeedbackRequest1 =
+                new FeedbackRequest.DishFeedbackRequest(1L, 5, "Excelente!");
+        FeedbackRequest.DishFeedbackRequest dishFeedbackRequest2 =
+                new FeedbackRequest.DishFeedbackRequest(2L, 4, "Muito bom");
+
+        FeedbackRequest requestWithMultipleDishes = new FeedbackRequest(
+                "João", 5, 5, 5, 5,
+                "Ótimo atendimento", "Comida deliciosa", "Ambiente agradável", "Recomendo!",
+                List.of(dishFeedbackRequest1, dishFeedbackRequest2)
+        );
+
         DishFeedback dishFeedback2 = new DishFeedback();
+        dishFeedback2.setId(2L);
         dishFeedback2.setDish(dish2);
         dishFeedback2.setRating(4);
         dishFeedback2.setComment("Muito bom");
 
-        feedback.setDishFeedbackList(Arrays.asList(dishFeedback, dishFeedback2));
+        feedback.setDishFeedbackList(Arrays.asList(feedback.getDishFeedbackList().getFirst(), dishFeedback2));
 
         when(dishRepository.findById(1L)).thenReturn(Optional.of(dish));
         when(dishRepository.findById(2L)).thenReturn(Optional.of(dish2));
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
 
         // Act
-        Feedback savedFeedback = feedbackService.save(feedback);
+        FeedbackResponse savedFeedback = feedbackService.save(requestWithMultipleDishes);
 
         // Assert
         assertNotNull(savedFeedback);
-        assertEquals(2, savedFeedback.getDishFeedbackList().size());
+        assertEquals(2, savedFeedback.dishFeedbacks().size());
         verify(dishRepository, times(1)).findById(1L);
         verify(dishRepository, times(1)).findById(2L);
-        verify(feedbackRepository, times(1)).save(feedback);
+        verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
 }
