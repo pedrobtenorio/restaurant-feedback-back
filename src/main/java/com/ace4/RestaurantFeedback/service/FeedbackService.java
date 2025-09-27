@@ -6,12 +6,22 @@ import com.ace4.RestaurantFeedback.model.DishFeedback;
 import com.ace4.RestaurantFeedback.model.Feedback;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackRequest;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackResponse;
+import com.ace4.RestaurantFeedback.model.filter.FeedbackFilter;
 import com.ace4.RestaurantFeedback.repository.DishRepository;
 import com.ace4.RestaurantFeedback.repository.FeedbackRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +31,7 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final DishRepository dishRepository;
+    private final EntityManager entityManager;
 
     public FeedbackResponse save(FeedbackRequest feedbackRequest) {
         Feedback feedback = convertToEntity(feedbackRequest);
@@ -114,6 +125,49 @@ public class FeedbackService {
                 feedback.getGeneralComment(),
                 feedback.getTimestamp(),
                 dishFeedbackResponses
+        );
+    }
+
+    public Page<FeedbackResponse> findAllWithFilters(FeedbackFilter filter, Pageable pageable) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Feedback> cq = cb.createQuery(Feedback.class);
+        Root<Feedback> feedback = cq.from(Feedback.class);
+
+        List<Predicate> predicates = new ArrayList<>();
+
+        if (filter.startDate() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(feedback.get("timestamp"), filter.startDate()));
+        }
+        if (filter.endDate() != null) {
+            predicates.add(cb.lessThanOrEqualTo(feedback.get("timestamp"), filter.endDate()));
+        }
+        if (filter.minFoodRating() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(feedback.get("foodRating"), filter.minFoodRating()));
+        }
+        if (filter.minServiceRating() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(feedback.get("serviceRating"), filter.minServiceRating()));
+        }
+        if (filter.minEnvironmentRating() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(feedback.get("environmentRating"), filter.minEnvironmentRating()));
+        }
+        if (filter.minRecommendationRating() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(feedback.get("recommendationRating"), filter.minRecommendationRating()));
+        }
+
+        cq.where(predicates.toArray(new Predicate[0]));
+
+        TypedQuery<Feedback> query = entityManager.createQuery(cq);
+        query.setFirstResult((int) pageable.getOffset());
+        query.setMaxResults(pageable.getPageSize());
+
+        List<Feedback> feedbacks = query.getResultList();
+
+        long total = feedbackRepository.count();
+
+        return new org.springframework.data.domain.PageImpl<>(
+                feedbacks.stream().map(this::convertToResponse).toList(),
+                pageable,
+                total
         );
     }
 }
