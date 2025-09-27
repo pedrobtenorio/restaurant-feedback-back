@@ -3,7 +3,11 @@ package com.ace4.RestaurantFeedback.controller;
 import com.ace4.RestaurantFeedback.Exception.EntityNotFoundException;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackRequest;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackResponse;
+import com.ace4.RestaurantFeedback.model.filter.FeedbackFilter;
 import com.ace4.RestaurantFeedback.service.FeedbackService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +34,11 @@ public class FeedbackController {
     }
 
     @GetMapping
+    public Page<FeedbackResponse> getAllPaginated(@ModelAttribute FeedbackFilter filter, @PageableDefault(size = 10) Pageable pageable) {
+        return feedbackService.findAllWithFilters(filter, pageable);
+    }
+
+    @GetMapping("/all")
     public List<FeedbackResponse> getAll() {
         return feedbackService.findAll();
     }
