@@ -1,4 +1,4 @@
-package com.ace4.RestaurantFeedback.model.dto.feedback;
+package com.ace4.RestaurantFeedback.model.filter;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
