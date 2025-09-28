@@ -64,7 +64,8 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:3030",
-                "http://localhost:3031"
+                "http://localhost:3031",
+                "http://localhost:5173"
         ));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
