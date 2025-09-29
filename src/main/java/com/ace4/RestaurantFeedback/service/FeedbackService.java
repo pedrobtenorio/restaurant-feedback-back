@@ -6,6 +6,7 @@ import com.ace4.RestaurantFeedback.model.DishFeedback;
 import com.ace4.RestaurantFeedback.model.Feedback;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackRequest;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackResponse;
+import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackSummaryResponse;
 import com.ace4.RestaurantFeedback.model.filter.FeedbackFilter;
 import com.ace4.RestaurantFeedback.repository.DishRepository;
 import com.ace4.RestaurantFeedback.repository.FeedbackRepository;
@@ -14,15 +15,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +26,6 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final DishRepository dishRepository;
-    private final EntityManager entityManager;
 
     public FeedbackResponse save(FeedbackRequest feedbackRequest) {
         Feedback feedback = convertToEntity(feedbackRequest);
@@ -129,10 +122,22 @@ public class FeedbackService {
         );
     }
 
-    public Page<FeedbackResponse> findAllWithFilters(FeedbackFilter filter, Pageable pageable) {
+    public Page<FeedbackSummaryResponse> findAllSummariesWithFilters(FeedbackFilter filter, Pageable pageable) {
         return feedbackRepository.findAll(
                 FeedbackSpecifications.withFilters(filter),
                 pageable
-        ).map(this::convertToResponse);
+        ).map(feedback -> new FeedbackSummaryResponse(
+                feedback.getCustomerName(),
+                feedback.getAttendantName(),
+                feedback.getServiceRating(),
+                feedback.getFoodRating(),
+                feedback.getEnvironmentRating(),
+                feedback.getRecommendationRating(),
+                feedback.getServiceComment(),
+                feedback.getFoodComment(),
+                feedback.getEnvironmentComment(),
+                feedback.getGeneralComment(),
+                feedback.getTimestamp()
+        ));
     }
 }
