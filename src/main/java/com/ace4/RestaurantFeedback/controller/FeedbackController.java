@@ -35,17 +35,19 @@ public class FeedbackController {
         }
     }
 
-    @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<FeedbackSummaryResponse>> getAllPaginated(@ModelAttribute FeedbackFilter filter, @PageableDefault(size = 10) Pageable pageable) {
+    @GetMapping
+    public ResponseEntity<Page<FeedbackSummaryResponse>> getAllPaginated(@ModelAttribute FeedbackFilter filter, @PageableDefault() Pageable pageable) {
         return ResponseEntity.ok(feedbackService.findAllSummariesWithFilters(filter, pageable));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/all")
     public List<FeedbackResponse> getAll() {
         return feedbackService.findAll();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}")
     public ResponseEntity<FeedbackResponse> getById(@PathVariable Long id) {
         return feedbackService.findById(id)
@@ -54,6 +56,7 @@ public class FeedbackController {
     }
 
 
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (feedbackService.findById(id).isPresent()) {
