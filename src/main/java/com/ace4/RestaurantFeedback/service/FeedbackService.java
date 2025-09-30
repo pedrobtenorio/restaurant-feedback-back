@@ -6,9 +6,14 @@ import com.ace4.RestaurantFeedback.model.DishFeedback;
 import com.ace4.RestaurantFeedback.model.Feedback;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackRequest;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackResponse;
+import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackSummaryResponse;
+import com.ace4.RestaurantFeedback.model.filter.FeedbackFilter;
 import com.ace4.RestaurantFeedback.repository.DishRepository;
 import com.ace4.RestaurantFeedback.repository.FeedbackRepository;
+import com.ace4.RestaurantFeedback.specification.FeedbackSpecifications;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -115,5 +120,24 @@ public class FeedbackService {
                 feedback.getTimestamp(),
                 dishFeedbackResponses
         );
+    }
+
+    public Page<FeedbackSummaryResponse> findAllSummariesWithFilters(FeedbackFilter filter, Pageable pageable) {
+        return feedbackRepository.findAll(
+                FeedbackSpecifications.withFilters(filter),
+                pageable
+        ).map(feedback -> new FeedbackSummaryResponse(
+                feedback.getCustomerName(),
+                feedback.getAttendantName(),
+                feedback.getServiceRating(),
+                feedback.getFoodRating(),
+                feedback.getEnvironmentRating(),
+                feedback.getRecommendationRating(),
+                feedback.getServiceComment(),
+                feedback.getFoodComment(),
+                feedback.getEnvironmentComment(),
+                feedback.getGeneralComment(),
+                feedback.getTimestamp()
+        ));
     }
 }

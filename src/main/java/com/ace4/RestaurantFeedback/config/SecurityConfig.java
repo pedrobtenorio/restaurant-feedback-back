@@ -37,11 +37,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(
-                        req -> req.requestMatchers("/api/auth/**","/error", "/api/feedbacks/**")
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated()
-                ).userDetailsService(userDetailsServiceImp)
+                        req -> req
+                                .requestMatchers("/api/auth/**", "/error").permitAll()
+                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/feedbacks").permitAll()
+                                .requestMatchers("/api/feedbacks/**").authenticated()
+                                .anyRequest().authenticated()
+                )
+                .userDetailsService(userDetailsServiceImp)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
