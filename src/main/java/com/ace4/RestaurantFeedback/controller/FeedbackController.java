@@ -55,6 +55,11 @@ public class FeedbackController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/by-attendant/{attendantId}")
+    public List<FeedbackResponse> getAllByAttendantId(@PathVariable Long attendantId) {
+        return feedbackService.findAllByAttendantId(attendantId);
+    }
 
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{id}")
