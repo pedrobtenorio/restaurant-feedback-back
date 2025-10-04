@@ -5,3 +5,11 @@ databaseChangeLog:
       file: db/changelog/0000000001_create_user_table.sql
   - include:
       file: db/changelog/0000000002_refactor_feedback_schema.sql
+  - include:
+      file: db/changelog/0000000003_remove_dining_table.sql
+  - include:
+      file: db/changelog/0000000004_create_example_dish.sql
+  - include:
+      file: db/changelog/0000000005_create_example_feedback.sql
+  - include:
+      file: db/changelog/0000000006_create_attendant.sql

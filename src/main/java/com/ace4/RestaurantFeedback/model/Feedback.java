@@ -19,7 +19,10 @@ public class Feedback {
     private Long id;
 
     private String customerName;
-    private String attendantName;
+
+    @ManyToOne
+    @JoinColumn(name = "attendant_id")
+    private Attendant attendant;
 
     private Integer serviceRating;
     private Integer foodRating;
@@ -33,10 +36,6 @@ public class Feedback {
     private String generalComment;
 
     private LocalDateTime timestamp;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "table_id")
-    private DiningTable table;
 
     @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DishFeedback> dishFeedbackList;
