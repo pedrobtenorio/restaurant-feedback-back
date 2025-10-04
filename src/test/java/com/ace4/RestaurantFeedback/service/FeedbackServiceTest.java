@@ -8,6 +8,7 @@ import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackRequest;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackResponse;
 import com.ace4.RestaurantFeedback.repository.DishRepository;
 import com.ace4.RestaurantFeedback.repository.FeedbackRepository;
+import com.ace4.RestaurantFeedback.repository.AttendantRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,12 +36,16 @@ class FeedbackServiceTest {
     @Mock
     private DishRepository dishRepository;
 
+    @Mock
+    private AttendantRepository attendantRepository;
+
     @InjectMocks
     private FeedbackService feedbackService;
 
     private FeedbackRequest feedbackRequest;
     private Feedback feedback;
     private Dish dish;
+    private com.ace4.RestaurantFeedback.model.Attendant attendant;
 
     @BeforeEach
     void setUp() {
@@ -48,11 +53,18 @@ class FeedbackServiceTest {
         dish.setId(1L);
         dish.setName("Pizza");
 
+        attendant = com.ace4.RestaurantFeedback.model.Attendant.builder()
+                .id(1L)
+                .name("João")
+                .email("joao@email.com")
+                .active(true)
+                .build();
+
         FeedbackRequest.DishFeedbackRequest dishFeedbackRequest =
                 new FeedbackRequest.DishFeedbackRequest(1L, 5, "Excelente!");
 
         feedbackRequest = new FeedbackRequest(
-                "João",
+                1L, // agora é attendantId (Long)
                 5, 5, 5, 5,
                 "Ótimo atendimento",
                 "Comida deliciosa",
@@ -63,7 +75,7 @@ class FeedbackServiceTest {
 
         feedback = new Feedback();
         feedback.setId(1L);
-        feedback.setAttendantName("João");
+        feedback.setAttendant(attendant);
         feedback.setTimestamp(LocalDateTime.now());
 
         DishFeedback dishFeedback = new DishFeedback();
@@ -78,6 +90,7 @@ class FeedbackServiceTest {
     @Test
     void saveWithValidDataShouldReturnFeedbackResponse() {
         // Arrange
+        when(attendantRepository.findById(1L)).thenReturn(Optional.of(attendant));
         when(dishRepository.findById(1L)).thenReturn(Optional.of(dish));
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
 
@@ -89,6 +102,7 @@ class FeedbackServiceTest {
         assertEquals("João", savedFeedback.attendantName());
         assertEquals(1, savedFeedback.dishFeedbacks().size());
         assertEquals("Pizza", savedFeedback.dishFeedbacks().getFirst().dishName());
+        verify(attendantRepository, times(1)).findById(1L);
         verify(dishRepository, times(1)).findById(1L);
         verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
@@ -96,6 +110,7 @@ class FeedbackServiceTest {
     @Test
     void saveWithNonExistingDishShouldThrowEntityNotFoundException() {
         // Arrange
+        when(attendantRepository.findById(1L)).thenReturn(Optional.of(attendant)); // garantir attendant existente
         when(dishRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -111,8 +126,9 @@ class FeedbackServiceTest {
     @Test
     void saveWithoutDishFeedbackListShouldSaveSuccessfully() {
         // Arrange
+        when(attendantRepository.findById(1L)).thenReturn(Optional.of(attendant));
         FeedbackRequest requestWithoutDish = new FeedbackRequest(
-                "João", 5, 5, 5, 5,
+                1L, 5, 5, 5, 5,
                 "Ótimo", "Delicioso", "Agradável", "Recomendo!", null
         );
         feedback.setDishFeedbackList(null);
@@ -186,8 +202,9 @@ class FeedbackServiceTest {
     @Test
     void saveWithEmptyDishFeedbackListShouldSaveSuccessfully() {
         // Arrange
+        when(attendantRepository.findById(1L)).thenReturn(Optional.of(attendant));
         FeedbackRequest requestWithEmptyDishList = new FeedbackRequest(
-                "João", 5, 5, 5, 5,
+                1L, 5, 5, 5, 5,
                 "Ótimo", "Delicioso", "Agradável", "Recomendo!",
                 Collections.emptyList()
         );
@@ -208,6 +225,7 @@ class FeedbackServiceTest {
     @Test
     void saveWithMultipleDishFeedbacksShouldSaveSuccessfully() {
         // Arrange
+        when(attendantRepository.findById(1L)).thenReturn(Optional.of(attendant));
         Dish dish2 = new Dish();
         dish2.setId(2L);
         dish2.setName("Hamburger");
@@ -218,7 +236,7 @@ class FeedbackServiceTest {
                 new FeedbackRequest.DishFeedbackRequest(2L, 4, "Muito bom");
 
         FeedbackRequest requestWithMultipleDishes = new FeedbackRequest(
-                "João", 5, 5, 5, 5,
+                1L, 5, 5, 5, 5,
                 "Ótimo atendimento", "Comida deliciosa", "Ambiente agradável", "Recomendo!",
                 List.of(dishFeedbackRequest1, dishFeedbackRequest2)
         );
