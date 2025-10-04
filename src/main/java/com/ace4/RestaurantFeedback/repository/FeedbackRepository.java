@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface FeedbackRepository extends JpaRepository<Feedback, Long>, JpaSpecificationExecutor<Feedback> {
     List<Feedback> findByAttendantName(String attendantName);
+    List<Feedback> findByAttendantId(Long attendantId);
 }

@@ -40,6 +40,10 @@ public class SecurityConfig {
                         req -> req
                                 .requestMatchers("/api/auth/**", "/error").permitAll()
                                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/feedbacks").permitAll()
+                                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/attendants/**").permitAll()
+                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/attendants/**").authenticated()
+                                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/attendants/**").authenticated()
+                                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/attendants/**").authenticated()
                                 .requestMatchers("/api/feedbacks/**").authenticated()
                                 .anyRequest().authenticated()
                 )

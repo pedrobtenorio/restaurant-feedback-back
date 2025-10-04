@@ -1,6 +1,7 @@
 package com.ace4.RestaurantFeedback.service;
 
 import com.ace4.RestaurantFeedback.Exception.EntityNotFoundException;
+import com.ace4.RestaurantFeedback.model.Attendant;
 import com.ace4.RestaurantFeedback.model.Dish;
 import com.ace4.RestaurantFeedback.model.DishFeedback;
 import com.ace4.RestaurantFeedback.model.Feedback;
@@ -8,6 +9,7 @@ import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackRequest;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackResponse;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackSummaryResponse;
 import com.ace4.RestaurantFeedback.model.filter.FeedbackFilter;
+import com.ace4.RestaurantFeedback.repository.AttendantRepository;
 import com.ace4.RestaurantFeedback.repository.DishRepository;
 import com.ace4.RestaurantFeedback.repository.FeedbackRepository;
 import com.ace4.RestaurantFeedback.specification.FeedbackSpecifications;
@@ -26,6 +28,7 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final DishRepository dishRepository;
+    private final AttendantRepository attendantRepository;
 
     public FeedbackResponse save(FeedbackRequest feedbackRequest) {
         Feedback feedback = convertToEntity(feedbackRequest);
@@ -57,6 +60,13 @@ public class FeedbackService {
         feedbackRepository.deleteById(id);
     }
 
+    public List<FeedbackResponse> findAllByAttendantId(Long attendantId) {
+        return feedbackRepository.findByAttendantId(attendantId)
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
     private Dish findDishById(Long dishId) {
         return dishRepository.findById(dishId)
                 .orElseThrow(() -> new EntityNotFoundException("Dish", String.valueOf(dishId)));
@@ -64,7 +74,15 @@ public class FeedbackService {
 
     private Feedback convertToEntity(FeedbackRequest request) {
         Feedback feedback = new Feedback();
-        feedback.setAttendantName(request.attendantName());
+
+        if (request.attendantId() != null) {
+            Attendant attendant = attendantRepository.findById(request.attendantId())
+                .orElseThrow(() -> new EntityNotFoundException("Attendant", String.valueOf(request.attendantId())));
+            feedback.setAttendant(attendant);
+        } else {
+            feedback.setAttendant(null);
+        }
+
         feedback.setServiceRating(request.serviceRating());
         feedback.setFoodRating(request.foodRating());
         feedback.setEnvironmentRating(request.environmentRating());
@@ -107,8 +125,11 @@ public class FeedbackService {
                     .toList();
         }
 
+        // Ajuste: retornar attendant info se necessário
+        String attendantName = feedback.getAttendant() != null ? feedback.getAttendant().getName() : null;
+
         return new FeedbackResponse(
-                feedback.getAttendantName(),
+                attendantName,
                 feedback.getServiceRating(),
                 feedback.getFoodRating(),
                 feedback.getEnvironmentRating(),
@@ -128,7 +149,7 @@ public class FeedbackService {
                 pageable
         ).map(feedback -> new FeedbackSummaryResponse(
                 feedback.getCustomerName(),
-                feedback.getAttendantName(),
+                feedback.getAttendant() != null ? feedback.getAttendant().getName() : null,
                 feedback.getServiceRating(),
                 feedback.getFoodRating(),
                 feedback.getEnvironmentRating(),
