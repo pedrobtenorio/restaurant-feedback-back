@@ -87,9 +87,6 @@ public class FeedbackService {
         feedback.setFoodRating(request.foodRating());
         feedback.setEnvironmentRating(request.environmentRating());
         feedback.setRecommendationRating(request.recommendationRating());
-        feedback.setServiceComment(request.serviceComment());
-        feedback.setFoodComment(request.foodComment());
-        feedback.setEnvironmentComment(request.environmentComment());
         feedback.setGeneralComment(request.generalComment());
         feedback.setTimestamp(LocalDateTime.now());
 
@@ -134,9 +131,6 @@ public class FeedbackService {
                 feedback.getFoodRating(),
                 feedback.getEnvironmentRating(),
                 feedback.getRecommendationRating(),
-                feedback.getServiceComment(),
-                feedback.getFoodComment(),
-                feedback.getEnvironmentComment(),
                 feedback.getGeneralComment(),
                 feedback.getTimestamp(),
                 dishFeedbackResponses
@@ -154,9 +148,6 @@ public class FeedbackService {
                 feedback.getFoodRating(),
                 feedback.getEnvironmentRating(),
                 feedback.getRecommendationRating(),
-                feedback.getServiceComment(),
-                feedback.getFoodComment(),
-                feedback.getEnvironmentComment(),
                 feedback.getGeneralComment(),
                 feedback.getTimestamp()
         ));

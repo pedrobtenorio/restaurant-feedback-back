@@ -29,9 +29,6 @@ public class Feedback {
     private Integer environmentRating;
     private Integer recommendationRating;
 
-    private String serviceComment;
-    private String foodComment;
-    private String environmentComment;
 
     private String generalComment;
 

@@ -8,9 +8,6 @@ public record FeedbackRequest(
     Integer foodRating,
     Integer environmentRating,
     Integer recommendationRating,
-    String serviceComment,
-    String foodComment,
-    String environmentComment,
     String generalComment,
     List<DishFeedbackRequest> dishFeedbacks
 ) {
