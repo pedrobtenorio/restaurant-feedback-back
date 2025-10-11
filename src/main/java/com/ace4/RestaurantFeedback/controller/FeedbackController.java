@@ -1,6 +1,7 @@
 package com.ace4.RestaurantFeedback.controller;
 
 import com.ace4.RestaurantFeedback.Exception.EntityNotFoundException;
+import com.ace4.RestaurantFeedback.model.dto.FeedbackSummaryDto;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackRequest;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackResponse;
 import com.ace4.RestaurantFeedback.model.filter.FeedbackFilter;
@@ -9,10 +10,12 @@ import com.ace4.RestaurantFeedback.service.FeedbackService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -56,12 +59,6 @@ public class FeedbackController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/by-attendant/{attendantId}")
-    public List<FeedbackResponse> getAllByAttendantId(@PathVariable Long attendantId) {
-        return feedbackService.findAllByAttendantId(attendantId);
-    }
-
-    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (feedbackService.findById(id).isPresent()) {
@@ -69,5 +66,17 @@ public class FeedbackController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+
+    @GetMapping("/summary")
+    public ResponseEntity<FeedbackSummaryDto> getFeedbackSummary(
+            @RequestParam(required = false, defaultValue = "service") String ratingType,
+            @RequestParam(required = false) String attendantName,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        FeedbackSummaryDto summary = feedbackService.getFeedbackSummary(ratingType, attendantName, startDate, endDate);
+        return ResponseEntity.ok(summary);
     }
 }
