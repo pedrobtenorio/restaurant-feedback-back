@@ -5,6 +5,8 @@ import com.ace4.RestaurantFeedback.model.Attendant;
 import com.ace4.RestaurantFeedback.model.Dish;
 import com.ace4.RestaurantFeedback.model.DishFeedback;
 import com.ace4.RestaurantFeedback.model.Feedback;
+import com.ace4.RestaurantFeedback.model.dto.FeedbackSummaryDto;
+import com.ace4.RestaurantFeedback.model.dto.RatingDistributionDto;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackRequest;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackResponse;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackSummaryResponse;
@@ -13,14 +15,16 @@ import com.ace4.RestaurantFeedback.repository.AttendantRepository;
 import com.ace4.RestaurantFeedback.repository.DishRepository;
 import com.ace4.RestaurantFeedback.repository.FeedbackRepository;
 import com.ace4.RestaurantFeedback.specification.FeedbackSpecifications;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -29,6 +33,7 @@ public class FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final DishRepository dishRepository;
     private final AttendantRepository attendantRepository;
+    private final EntityManager entityManager;
 
     public FeedbackResponse save(FeedbackRequest feedbackRequest) {
         Feedback feedback = convertToEntity(feedbackRequest);
@@ -151,5 +156,75 @@ public class FeedbackService {
                 feedback.getGeneralComment(),
                 feedback.getTimestamp()
         ));
+    }
+
+
+
+    public FeedbackSummaryDto getFeedbackSummary(
+            String ratingType,
+            String attendantName,
+            LocalDate startDate,
+            LocalDate endDate) {
+
+        // 1. Validar e mapear o tipo de avaliação para o nome da coluna no BD
+        String ratingColumn = mapRatingTypeToColumn(ratingType);
+
+        // 2. Construir a query JPQL dinamicamente
+        StringBuilder queryBuilder = new StringBuilder();
+        Map<String, Object> parameters = new HashMap<>();
+
+        queryBuilder.append("SELECT ")
+                .append(" COUNT(f) AS totalFeedbacks, ")
+                .append(" AVG(f.").append(ratingColumn).append(") AS averageRating, ")
+                .append(" SUM(CASE WHEN f.").append(ratingColumn).append(" = 5 THEN 1 ELSE 0 END) AS fiveStars, ")
+                .append(" SUM(CASE WHEN f.").append(ratingColumn).append(" = 4 THEN 1 ELSE 0 END) AS fourStars, ")
+                .append(" SUM(CASE WHEN f.").append(ratingColumn).append(" = 3 THEN 1 ELSE 0 END) AS threeStars, ")
+                .append(" SUM(CASE WHEN f.").append(ratingColumn).append(" = 2 THEN 1 ELSE 0 END) AS twoStars, ")
+                .append(" SUM(CASE WHEN f.").append(ratingColumn).append(" = 1 THEN 1 ELSE 0 END) AS oneStar ")
+                .append("FROM Feedback f WHERE 1=1 ");
+
+        if (attendantName != null && !attendantName.isBlank()) {
+            queryBuilder.append("AND f.attendant.name = :attendantName ");
+            parameters.put("attendantName", attendantName);
+        }
+        if (startDate != null) {
+            queryBuilder.append("AND f.timestamp >= :startDate ");
+            parameters.put("startDate", startDate.atStartOfDay());
+        }
+        if (endDate != null) {
+            queryBuilder.append("AND f.timestamp <= :endDate ");
+            parameters.put("endDate", endDate.plusDays(1).atStartOfDay());
+        }
+
+        TypedQuery<Object[]> query = entityManager.createQuery(queryBuilder.toString(), Object[].class);
+        parameters.forEach(query::setParameter);
+
+        Object[] result = query.getSingleResult();
+
+        return mapResultToDto(result);
+    }
+
+    private String mapRatingTypeToColumn(String ratingType) {
+        return switch (Objects.requireNonNullElse(ratingType, "service")) {
+            case "food" -> "foodRating";
+            case "environment" -> "environmentRating";
+            case "service" -> "serviceRating";
+            default -> throw new IllegalArgumentException("Tipo de avaliação inválido: " + ratingType);
+        };
+    }
+
+    private FeedbackSummaryDto mapResultToDto(Object[] result) {
+        if (result == null || result[0] == null || (Long) result[0] == 0) {
+            // Retorna um resumo vazio se não houver feedbacks
+            return new FeedbackSummaryDto(0, 0.0, new RatingDistributionDto(0, 0, 0, 0, 0));
+        }
+
+        long totalFeedbacks = (Long) result[0];
+        double averageRating = (result[1] != null) ? (Double) result[1] : 0.0;
+        RatingDistributionDto distribution = new RatingDistributionDto(
+                (Long) result[2], (Long) result[3], (Long) result[4], (Long) result[5], (Long) result[6]
+        );
+
+        return new FeedbackSummaryDto(totalFeedbacks, averageRating, distribution);
     }
 }

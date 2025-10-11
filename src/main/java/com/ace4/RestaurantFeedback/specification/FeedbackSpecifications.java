@@ -32,7 +32,12 @@ public class FeedbackSpecifications {
             if (filter.minRecommendationRating() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("recommendationRating"), filter.minRecommendationRating()));
             }
-
+            if (filter.attendantName() != null && !filter.attendantName().isBlank()) {
+                predicates.add(cb.like(
+                        cb.lower(root.get("attendant").get("name")),
+                        "%" + filter.attendantName().toLowerCase() + "%"
+                ));
+            }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
