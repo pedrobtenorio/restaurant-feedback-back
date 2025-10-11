@@ -37,11 +37,17 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(
-                        req -> req.requestMatchers("/api/auth/**","/error", "/api/feedbacks/**")
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated()
-                ).userDetailsService(userDetailsServiceImp)
+                        req -> req
+                                .requestMatchers("/api/auth/**", "/error").permitAll()
+                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/feedbacks").permitAll()
+                                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/attendants/**").permitAll()
+                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/attendants/**").authenticated()
+                                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/attendants/**").authenticated()
+                                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/attendants/**").authenticated()
+                                .requestMatchers("/api/feedbacks/**").authenticated()
+                                .anyRequest().authenticated()
+                )
+                .userDetailsService(userDetailsServiceImp)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -64,7 +70,9 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:3030",
-                "http://localhost:3031"
+                "http://localhost:3031",
+                "http://localhost:5173",
+                "http://localhost:4200"
         ));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));

@@ -9,9 +9,6 @@ public record FeedbackResponse(
     Integer foodRating,
     Integer environmentRating,
     Integer recommendationRating,
-    String serviceComment,
-    String foodComment,
-    String environmentComment,
     String generalComment,
     LocalDateTime createdAt,
     List<DishFeedbackResponse> dishFeedbacks
