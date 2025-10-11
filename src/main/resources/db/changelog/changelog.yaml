@@ -12,6 +12,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/0000000005_create_example_feedback.sql
   - include:
+      file: db/changelog/0000000006_created_column_deleted.sql
+  - include:
       file: db/changelog/0000000006_create_attendant.sql
   - include:
       file: db/changelog/0000000007_remove_comments_column.sql
