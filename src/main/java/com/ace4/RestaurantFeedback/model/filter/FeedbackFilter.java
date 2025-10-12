@@ -13,5 +13,6 @@ public record FeedbackFilter(
     Integer minFoodRating,
     Integer minServiceRating,
     Integer minEnvironmentRating,
-    Integer minRecommendationRating
+    Integer minRecommendationRating,
+    String attendantName
 ) {}
