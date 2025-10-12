@@ -1,6 +1,7 @@
 package com.ace4.RestaurantFeedback.service;
 
 import com.ace4.RestaurantFeedback.Exception.EntityNotFoundException;
+import com.ace4.RestaurantFeedback.model.Attendant;
 import com.ace4.RestaurantFeedback.model.Dish;
 import com.ace4.RestaurantFeedback.model.Feedback;
 import com.ace4.RestaurantFeedback.model.DishFeedback;
@@ -8,6 +9,7 @@ import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackRequest;
 import com.ace4.RestaurantFeedback.model.dto.feedback.FeedbackResponse;
 import com.ace4.RestaurantFeedback.repository.DishRepository;
 import com.ace4.RestaurantFeedback.repository.FeedbackRepository;
+import com.ace4.RestaurantFeedback.repository.AttendantRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class FeedbackServiceTest {
@@ -34,6 +37,9 @@ class FeedbackServiceTest {
 
     @Mock
     private DishRepository dishRepository;
+
+    @Mock
+    private AttendantRepository attendantRepository;
 
     @InjectMocks
     private FeedbackService feedbackService;
@@ -52,18 +58,20 @@ class FeedbackServiceTest {
                 new FeedbackRequest.DishFeedbackRequest(1L, 5, "Excelente!");
 
         feedbackRequest = new FeedbackRequest(
-                "João",
+                1L, // attendantId
                 5, 5, 5, 5,
                 "Ótimo atendimento",
-                "Comida deliciosa",
-                "Ambiente agradável",
-                "Recomendo!",
                 List.of(dishFeedbackRequest)
         );
 
         feedback = new Feedback();
         feedback.setId(1L);
-        feedback.setAttendantName("João");
+        feedback.setCustomerName("João");
+        feedback.setServiceRating(5);
+        feedback.setFoodRating(5);
+        feedback.setEnvironmentRating(5);
+        feedback.setRecommendationRating(5);
+        feedback.setGeneralComment("Ótimo atendimento");
         feedback.setTimestamp(LocalDateTime.now());
 
         DishFeedback dishFeedback = new DishFeedback();
@@ -73,6 +81,12 @@ class FeedbackServiceTest {
         dishFeedback.setComment("Excelente!");
 
         feedback.setDishFeedbackList(List.of(dishFeedback));
+
+        Attendant attendant = new Attendant();
+        attendant.setId(1L);
+        attendant.setName("Carlos");
+
+        lenient().when(attendantRepository.findById(1L)).thenReturn(Optional.of(attendant));
     }
 
     @Test
@@ -86,7 +100,6 @@ class FeedbackServiceTest {
 
         // Assert
         assertNotNull(savedFeedback);
-        assertEquals("João", savedFeedback.attendantName());
         assertEquals(1, savedFeedback.dishFeedbacks().size());
         assertEquals("Pizza", savedFeedback.dishFeedbacks().getFirst().dishName());
         verify(dishRepository, times(1)).findById(1L);
@@ -112,8 +125,8 @@ class FeedbackServiceTest {
     void saveWithoutDishFeedbackListShouldSaveSuccessfully() {
         // Arrange
         FeedbackRequest requestWithoutDish = new FeedbackRequest(
-                "João", 5, 5, 5, 5,
-                "Ótimo", "Delicioso", "Agradável", "Recomendo!", null
+                1L, 5, 5, 5, 5,
+                "Ótimo atendimento", null
         );
         feedback.setDishFeedbackList(null);
         when(feedbackRepository.save(any(Feedback.class))).thenReturn(feedback);
@@ -140,7 +153,6 @@ class FeedbackServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals("João", result.getFirst().attendantName());
         verify(feedbackRepository, times(1)).findAll();
     }
 
@@ -154,7 +166,6 @@ class FeedbackServiceTest {
 
         // Assert
         assertTrue(result.isPresent());
-        assertEquals("João", result.get().attendantName());
         verify(feedbackRepository, times(1)).findById(1L);
     }
 
@@ -187,8 +198,8 @@ class FeedbackServiceTest {
     void saveWithEmptyDishFeedbackListShouldSaveSuccessfully() {
         // Arrange
         FeedbackRequest requestWithEmptyDishList = new FeedbackRequest(
-                "João", 5, 5, 5, 5,
-                "Ótimo", "Delicioso", "Agradável", "Recomendo!",
+                1L, 5, 5, 5, 5,
+                "Ótimo atendimento",
                 Collections.emptyList()
         );
 
@@ -218,8 +229,8 @@ class FeedbackServiceTest {
                 new FeedbackRequest.DishFeedbackRequest(2L, 4, "Muito bom");
 
         FeedbackRequest requestWithMultipleDishes = new FeedbackRequest(
-                "João", 5, 5, 5, 5,
-                "Ótimo atendimento", "Comida deliciosa", "Ambiente agradável", "Recomendo!",
+                1L, 5, 5, 5, 5,
+                "Ótimo atendimento",
                 List.of(dishFeedbackRequest1, dishFeedbackRequest2)
         );
 
