@@ -73,7 +73,7 @@ public class SecurityConfig {
                 "http://localhost:3031",
                 "http://localhost:5173",
                 "http://localhost:4200",
-                "https://restaurant-feedback-front.netlify.app"
+                "https://massagueirinha-feedbacks.netlify.app"
         ));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
