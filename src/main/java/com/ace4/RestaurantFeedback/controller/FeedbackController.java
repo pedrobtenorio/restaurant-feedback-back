@@ -41,7 +41,7 @@ public class FeedbackController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping
     public ResponseEntity<Page<FeedbackSummaryResponse>> getAllPaginated(@ModelAttribute FeedbackFilter filter, @PageableDefault() Pageable pageable) {
-        return ResponseEntity.ok(feedbackService.findAllSummariesWithFilters(filter, pageable));
+        return ResponseEntity.ok(feedbackService.findAllFeedbacksWithFilters(filter, pageable));
     }
 
     @PreAuthorize("isAuthenticated()")

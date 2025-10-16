@@ -20,6 +20,8 @@ import jakarta.persistence.TypedQuery;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -142,10 +144,17 @@ public class FeedbackService {
         );
     }
 
-    public Page<FeedbackSummaryResponse> findAllSummariesWithFilters(FeedbackFilter filter, Pageable pageable) {
+    public Page<FeedbackSummaryResponse> findAllFeedbacksWithFilters(FeedbackFilter filter, Pageable pageable) {
+
+        Pageable sortedPageable = PageRequest.of(
+            pageable.getPageNumber(),
+            pageable.getPageSize(),
+            Sort.by(Sort.Direction.DESC, "timestamp")
+        );
+
         return feedbackRepository.findAll(
                 FeedbackSpecifications.withFilters(filter),
-                pageable
+                sortedPageable
         ).map(feedback -> new FeedbackSummaryResponse(
                 feedback.getCustomerName(),
                 feedback.getAttendant() != null ? feedback.getAttendant().getName() : null,
@@ -166,10 +175,9 @@ public class FeedbackService {
             LocalDate startDate,
             LocalDate endDate) {
 
-        // 1. Validar e mapear o tipo de avaliação para o nome da coluna no BD
+
         String ratingColumn = mapRatingTypeToColumn(ratingType);
 
-        // 2. Construir a query JPQL dinamicamente
         StringBuilder queryBuilder = new StringBuilder();
         Map<String, Object> parameters = new HashMap<>();
 
@@ -228,3 +236,4 @@ public class FeedbackService {
         return new FeedbackSummaryDto(totalFeedbacks, averageRating, distribution);
     }
 }
+
